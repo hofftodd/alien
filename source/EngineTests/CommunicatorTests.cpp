@@ -245,12 +245,15 @@ TEST_F(CommunicatorTests, sender_noActiveSignal_noTransmission)
 
 TEST_F(CommunicatorTests, sender_signalPriority_signalReceived)
 {
-    // Create two senders (both facing south) and a receiver between them; only the sender for which the receiver
-    // lies in the opposite half-plane should transmit.
+    // Create two senders and a receiver between them; only the sender for which the receiver lies in the opposite
+    // half-plane should transmit. Both senders face south, which requires the encoded angle in
+    // signals[CommunicatorAngle] to be 0.5: refAngle(90) + frontAngle(0) + 0.5 * 180 = 180. Leaving that channel at 0
+    // would make both senders face east, putting the receiver exactly on the half-plane boundary of each, so neither
+    // would be gated and the outcome would depend on which sender happens to write last.
     auto data = ContentDesc().addCreature(
         {
             ObjectDesc().id(100).pos({100.0f, 100.0f}).type(CellDesc().frontAngle(0.0f).cellType(CommunicatorDesc().mode(SenderDesc().range(50)))),
-            ObjectDesc().id(101).pos({101.0f, 100.0f}).type(CellDesc().neuralActivity(NeuralActivityDesc().signals({1.0f, 0, 0, 0, 0, 0, 0, 0}))),
+            ObjectDesc().id(101).pos({101.0f, 100.0f}).type(CellDesc().neuralActivity(NeuralActivityDesc().signals({1.0f, 0.5f, 0, 0, 0, 0, 0, 0}))),
         },
         CreatureDesc().id(1));
     data.addConnection(100, 101);
@@ -258,7 +261,7 @@ TEST_F(CommunicatorTests, sender_signalPriority_signalReceived)
     data.addCreature(
         {
             ObjectDesc().id(200).pos({100.0f, 120.0f}).type(CellDesc().frontAngle(0.0f).cellType(CommunicatorDesc().mode(SenderDesc().range(50)))),
-            ObjectDesc().id(201).pos({101.0f, 120.0f}).type(CellDesc().neuralActivity(NeuralActivityDesc().signals({-1.0f, 0, 0, 0, 0, 0, 0, 0}))),
+            ObjectDesc().id(201).pos({101.0f, 120.0f}).type(CellDesc().neuralActivity(NeuralActivityDesc().signals({-1.0f, 0.5f, 0, 0, 0, 0, 0, 0}))),
         },
         CreatureDesc().id(2));
     data.addConnection(200, 201);
